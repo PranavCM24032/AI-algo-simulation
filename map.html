@@ -19,6 +19,7 @@
             --border-glow: rgba(56, 189, 248, 0.3);
             --path-active: #22c55e;
             --path-checking: #fbbf24;
+            --sidebar-space: 320px;
         }
 
         * {
@@ -37,16 +38,22 @@
         }
 
         svg {
-            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: calc(100vw - var(--sidebar-space));
             height: 100vh;
             cursor: move;
+            display: block;
+            flex: 1;
+            max-width: 100vw;
         }
 
         .edge {
             fill: none;
             stroke: #64748b;
-            stroke-width: 2;
-            stroke-opacity: 0.25;
+            stroke-width: 2.5;
+            stroke-opacity: 0.5;
             transition: all 0.3s ease;
         }
 
@@ -67,8 +74,8 @@
             stroke: #22c55e !important;
             stroke-width: 5px !important;
             stroke-opacity: 1 !important;
-            stroke-dasharray: 10;
-            animation: flow 2.5s linear infinite;
+            stroke-dasharray: 10 8;
+            animation: none;
             stroke-linecap: round;
             fill: none;
             filter: none;
@@ -85,9 +92,9 @@
         }
 
         .edge-label {
-            font-size: 9px;
+            font-size: 12px;
             fill: #94a3b8;
-            opacity: 0.6;
+            opacity: 0.8;
             pointer-events: none;
         }
 
@@ -126,22 +133,34 @@
             top: 20px;
             right: 20px;
             bottom: 20px;
-            width: 360px;
+            width: 280px;
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(14px);
             border: 1px solid rgba(148, 163, 184, 0.15);
             border-radius: 30px;
-            padding: 30px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 14px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             z-index: 100;
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
         }
 
         .sidebar h2 {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
+            line-height: 1.1;
+            white-space: nowrap;
             background: linear-gradient(to right, #fff, var(--accent));
             -webkit-background-clip: text;
             background-clip: text;
@@ -194,11 +213,11 @@
 
         .results-card {
             background: rgba(15, 23, 42, 0.5);
-            padding: 24px;
+            padding: 16px;
             border-radius: 20px;
             border: 1px solid #334155;
             display: none;
-            margin-top: auto;
+            margin-top: 6px;
         }
 
         .stat-item {
@@ -224,6 +243,85 @@
             overflow-y: auto;
             margin-top: 10px;
         }
+
+        @media (max-width: 900px) {
+            body {
+                min-height: 100dvh;
+                overflow-x: hidden;
+                overflow-y: auto;
+                flex-direction: column;
+            }
+
+            svg {
+                position: relative;
+                inset: auto;
+                right: auto;
+                width: 100vw;
+                height: 56dvh;
+                cursor: grab;
+            }
+
+            .sidebar {
+                position: relative;
+                top: auto;
+                right: auto;
+                bottom: auto;
+                left: auto;
+                width: calc(100% - 20px);
+                margin: 10px;
+                border-radius: 18px;
+                padding: 14px;
+                max-height: none;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                gap: 10px;
+            }
+
+            .sidebar h2 {
+                font-size: 18px;
+            }
+
+            .results-card {
+                margin-top: 6px;
+                padding: 12px;
+            }
+
+            .stat-item {
+                margin-bottom: 8px;
+                font-size: 13px;
+            }
+
+            .edge-label {
+                display: none;
+            }
+
+            .btn-primary,
+            select {
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            #liveTrace {
+                max-height: 62px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: calc(100% - 16px);
+                margin: 8px;
+                padding: 12px;
+            }
+
+            .sidebar h2 {
+                font-size: 17px;
+            }
+
+            .input-group label {
+                font-size: 10px;
+                margin-bottom: 6px;
+            }
+        }
     </style>
 </head>
 
@@ -244,17 +342,17 @@
         <div class="input-group">
             <label>⚙️ Algorithm Engine</label>
             <select id="algoSelect">
-                <option value="astar">A* Algorithm (Optimal + Fast)</option>
-                <option value="ucs">Uniform Cost Search (Cost Optimal)</option>
-                <option value="bfs">Breadth-First Search (Jump Optimal)</option>
+                <option value="astar">A* Algorithm</option>
+                <option value="ucs">Uniform Cost Search</option>
+                <option value="bfs">Breadth-First Search</option>
             </select>
         </div>
 
-        <button class="btn-primary" id="calculateBtn">START SIMULATION</button>
+        <button class="btn-primary" id="calculateBtn">START</button>
 
         <div class="results-card" id="results">
-            <div id="status-header">Ready</div>
-            <div id="status-sub" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 20px;">System
+            <div id="status-header" style="display: none;">Ready</div>
+            <div id="status-sub" style="display: none; color: var(--text-secondary); font-size: 12px; margin-bottom: 20px;">System
                 standby</div>
 
             <div class="stat-item">
@@ -326,94 +424,170 @@
         const graph = {
             nodes: [
                 { id: "A", x: 0.15, y: 0.85, color: "#f87171" },
-                { id: "B", x: 0.25, y: 0.80, color: "#818cf8" },
-                { id: "H", x: 0.25, y: 0.92, color: "#f472b6" },
-                { id: "G", x: 0.08, y: 0.75, color: "#2dd4bf" },
-                { id: "XX", x: 0.05, y: 0.85, color: "#60a5fa" },
-                { id: "D", x: 0.18, y: 0.70, color: "#34d399" },
-                { id: "YY", x: 0.10, y: 0.65, color: "#a3e635" },
-                { id: "LL", x: 0.05, y: 0.55, color: "#f472b6" },
-                { id: "C", x: 0.30, y: 0.65, color: "#fb7185" },
-                { id: "E", x: 0.35, y: 0.75, color: "#fbbf24" },
-                { id: "I", x: 0.28, y: 0.55, color: "#fb923c" },
-                { id: "J", x: 0.15, y: 0.45, color: "#60a5fa" },
-                { id: "MM", x: 0.22, y: 0.38, color: "#fb923c" },
-                { id: "K", x: 0.35, y: 0.42, color: "#a3e635" },
-                { id: "P", x: 0.42, y: 0.48, color: "#a78bfa" },
-                { id: "U", x: 0.48, y: 0.55, color: "#a3e635" },
-                { id: "V", x: 0.45, y: 0.62, color: "#f87171" },
-                { id: "L", x: 0.12, y: 0.25, color: "#f87171" },
-                { id: "M", x: 0.22, y: 0.20, color: "#818cf8" },
-                { id: "JJ", x: 0.18, y: 0.30, color: "#a78bfa" },
-                { id: "N", x: 0.32, y: 0.18, color: "#34d399" },
-                { id: "O", x: 0.38, y: 0.25, color: "#fbbf24" },
-                { id: "NN", x: 0.42, y: 0.10, color: "#60a5fa" },
-                { id: "W", x: 0.55, y: 0.20, color: "#818cf8" },
-                { id: "R", x: 0.62, y: 0.28, color: "#f472b6" },
-                { id: "X", x: 0.70, y: 0.25, color: "#34d399" },
-                { id: "KK", x: 0.80, y: 0.32, color: "#2dd4bf" },
-                { id: "Q", x: 0.55, y: 0.35, color: "#2dd4bf" },
-                { id: "F", x: 0.65, y: 0.45, color: "#a78bfa" },
-                { id: "T", x: 0.60, y: 0.60, color: "#60a5fa" },
-                { id: "EE", x: 0.55, y: 0.75, color: "#a3e635" },
-                { id: "DD", x: 0.65, y: 0.80, color: "#60a5fa" },
-                { id: "CC", x: 0.75, y: 0.70, color: "#fb923c" },
-                { id: "BB", x: 0.85, y: 0.75, color: "#f472b6" },
                 { id: "AA", x: 0.88, y: 0.60, color: "#2dd4bf" },
-                { id: "Z", x: 0.92, y: 0.50, color: "#a78bfa" },
+                { id: "B", x: 0.25, y: 0.80, color: "#818cf8" },
+                { id: "BB", x: 0.85, y: 0.75, color: "#f472b6" },
+                { id: "C", x: 0.30, y: 0.65, color: "#fb7185" },
+                { id: "CC", x: 0.75, y: 0.70, color: "#fb923c" },
+                { id: "D", x: 0.18, y: 0.70, color: "#34d399" },
+                { id: "DD", x: 0.65, y: 0.80, color: "#60a5fa" },
+                { id: "E", x: 0.35, y: 0.75, color: "#fbbf24" },
+                { id: "EE", x: 0.55, y: 0.75, color: "#a3e635" },
+                { id: "F", x: 0.65, y: 0.45, color: "#a78bfa" },
                 { id: "FF", x: 0.48, y: 0.85, color: "#f87171" },
+                { id: "G", x: 0.08, y: 0.75, color: "#2dd4bf" },
                 { id: "GG", x: 0.58, y: 0.92, color: "#818cf8" },
+                { id: "H", x: 0.25, y: 0.92, color: "#f472b6" },
                 { id: "HH", x: 0.75, y: 0.92, color: "#34d399" },
+                { id: "I", x: 0.28, y: 0.55, color: "#fb923c" },
                 { id: "II", x: 0.92, y: 0.88, color: "#fbbf24" },
-                { id: "TT", x: 0.82, y: 0.82, color: "#a78bfa" },
-                { id: "UU", x: 0.72, y: 0.88, color: "#2dd4bf" },
-                { id: "VV", x: 0.48, y: 0.95, color: "#f472b6" },
-                { id: "WW", x: 0.32, y: 0.95, color: "#fbbf24" },
-                { id: "Y", x: 0.88, y: 0.22, color: "#fb923c" },
-                { id: "PP", x: 0.78, y: 0.15, color: "#f87171" },
+                { id: "J", x: 0.15, y: 0.45, color: "#60a5fa" },
+                { id: "JJ", x: 0.18, y: 0.30, color: "#a78bfa" },
+                { id: "K", x: 0.35, y: 0.42, color: "#a3e635" },
+                { id: "KK", x: 0.80, y: 0.32, color: "#2dd4bf" },
+                { id: "L", x: 0.12, y: 0.25, color: "#f87171" },
+                { id: "LL", x: 0.05, y: 0.55, color: "#f472b6" },
+                { id: "M", x: 0.22, y: 0.20, color: "#818cf8" },
+                { id: "MM", x: 0.22, y: 0.38, color: "#fb923c" },
+                { id: "N", x: 0.32, y: 0.18, color: "#34d399" },
+                { id: "NN", x: 0.42, y: 0.10, color: "#60a5fa" },
+                { id: "O", x: 0.38, y: 0.25, color: "#fbbf24" },
                 { id: "OO", x: 0.68, y: 0.10, color: "#a3e635" },
-                { id: "ZZ", x: 0.95, y: 0.10, color: "#f87171" },
+                { id: "P", x: 0.42, y: 0.48, color: "#a78bfa" },
+                { id: "PP", x: 0.78, y: 0.15, color: "#f87171" },
+                { id: "Q", x: 0.55, y: 0.35, color: "#2dd4bf" },
                 { id: "QQ", x: 0.95, y: 0.22, color: "#818cf8" },
+                { id: "R", x: 0.62, y: 0.28, color: "#f472b6" },
                 { id: "RR", x: 0.95, y: 0.35, color: "#34d399" },
+                { id: "S", x: 0.80, y: 0.50, color: "#fb923c" },
                 { id: "SS", x: 0.95, y: 0.68, color: "#fbbf24" },
-                { id: "S", x: 0.80, y: 0.50, color: "#fb923c" }
+                { id: "T", x: 0.60, y: 0.60, color: "#60a5fa" },
+                { id: "TT", x: 0.82, y: 0.82, color: "#a78bfa" },
+                { id: "U", x: 0.48, y: 0.55, color: "#a3e635" },
+                { id: "UU", x: 0.72, y: 0.88, color: "#2dd4bf" },
+                { id: "V", x: 0.45, y: 0.62, color: "#f87171" },
+                { id: "VV", x: 0.48, y: 0.95, color: "#f472b6" },
+                { id: "W", x: 0.55, y: 0.20, color: "#818cf8" },
+                { id: "WW", x: 0.32, y: 0.95, color: "#fbbf24" },
+                { id: "X", x: 0.70, y: 0.25, color: "#34d399" },
+                { id: "XX", x: 0.05, y: 0.85, color: "#60a5fa" },
+                { id: "Y", x: 0.88, y: 0.22, color: "#fb923c" },
+                { id: "YY", x: 0.10, y: 0.65, color: "#a3e635" },
+                { id: "Z", x: 0.92, y: 0.50, color: "#a78bfa" },
+                { id: "ZZ", x: 0.95, y: 0.10, color: "#f87171" }
+            
             ],
             edges: [
-                { "from": "A", "to": "B", "weight": 31 }, { "from": "A", "to": "D", "weight": 24 }, { "from": "A", "to": "G", "weight": 29 },
-                { "from": "AA", "to": "Z", "weight": 11 }, { "from": "B", "to": "C", "weight": 25 }, { "from": "B", "to": "E", "weight": 17 },
-                { "from": "B", "to": "H", "weight": 15 }, { "from": "BB", "to": "AA", "weight": 14 }, { "from": "BB", "to": "S", "weight": 12 },
-                { "from": "C", "to": "E", "weight": 12 }, { "from": "C", "to": "G", "weight": 20 }, { "from": "CC", "to": "BB", "weight": 10 },
-                { "from": "CC", "to": "SS", "weight": 20 }, { "from": "D", "to": "C", "weight": 22 }, { "from": "DD", "to": "CC", "weight": 12 },
-                { "from": "DD", "to": "F", "weight": 35 }, { "from": "DD", "to": "T", "weight": 16 }, { "from": "E", "to": "FF", "weight": 15 },
-                { "from": "EE", "to": "DD", "weight": 15 }, { "from": "EE", "to": "U", "weight": 14 }, { "from": "F", "to": "CC", "weight": 25 },
-                { "from": "F", "to": "R", "weight": 15 }, { "from": "F", "to": "T", "weight": 14 }, { "from": "FF", "to": "E", "weight": 15 },
-                { "from": "FF", "to": "GG", "weight": 12 }, { "from": "G", "to": "J", "weight": 14 }, { "from": "G", "to": "XX", "weight": 12 },
-                { "from": "GG", "to": "H", "weight": 35 }, { "from": "GG", "to": "HH", "weight": 14 }, { "from": "H", "to": "GG", "weight": 35 },
-                { "from": "HH", "to": "II", "weight": 11 }, { "from": "HH", "to": "WW", "weight": 15 }, { "from": "I", "to": "C", "weight": 18 },
-                { "from": "I", "to": "J", "weight": 13 }, { "from": "I", "to": "K", "weight": 15 }, { "from": "II", "to": "SS", "weight": 22 },
-                { "from": "II", "to": "TT", "weight": 15 }, { "from": "J", "to": "D", "weight": 22 }, { "from": "J", "to": "MM", "weight": 10 },
-                { "from": "JJ", "to": "L", "weight": 14 }, { "from": "JJ", "to": "MM", "weight": 9 }, { "from": "JJ", "to": "N", "weight": 14 },
-                { "from": "JJ", "to": "K", "weight": 20 }, { "from": "K", "to": "P", "weight": 12 }, { "from": "K", "to": "U", "weight": 16 },
-                { "from": "K", "to": "Z", "weight": 58 }, { "from": "KK", "to": "Y", "weight": 15 }, { "from": "L", "to": "J", "weight": 18 },
-                { "from": "L", "to": "M", "weight": 12 }, { "from": "LL", "to": "J", "weight": 14 }, { "from": "LL", "to": "YY", "weight": 10 },
-                { "from": "M", "to": "JJ", "weight": 11 }, { "from": "M", "to": "N", "weight": 16 }, { "from": "MM", "to": "I", "weight": 12 },
-                { "from": "MM", "to": "K", "weight": 10 }, { "from": "MM", "to": "L", "weight": 15 }, { "from": "N", "to": "O", "weight": 10 },
-                { "from": "N", "to": "OO", "weight": 36 }, { "from": "N", "to": "P", "weight": 20 }, { "from": "NN", "to": "M", "weight": 25 },
-                { "from": "O", "to": "NN", "weight": 15 }, { "from": "OO", "to": "ZZ", "weight": 18 }, { "from": "P", "to": "I", "weight": 14 },
-                { "from": "P", "to": "Q", "weight": 18 }, { "from": "P", "to": "U", "weight": 11 }, { "from": "P", "to": "V", "weight": 15 },
-                { "from": "PP", "to": "OO", "weight": 11 }, { "from": "PP", "to": "Y", "weight": 13 }, { "from": "Q", "to": "F", "weight": 12 },
-                { "from": "Q", "to": "NN", "weight": 22 }, { "from": "Q", "to": "T", "weight": 25 }, { "from": "QQ", "to": "RR", "weight": 15 },
-                { "from": "QQ", "to": "ZZ", "weight": 10 }, { "from": "R", "to": "Q", "weight": 10 }, { "from": "R", "to": "S", "weight": 28 },
-                { "from": "R", "to": "X", "weight": 10 }, { "from": "RR", "to": "Y", "weight": 19 }, { "from": "S", "to": "AA", "weight": 15 },
-                { "from": "S", "to": "CC", "weight": 18 }, { "from": "S", "to": "F", "weight": 15 }, { "from": "S", "to": "Z", "weight": 11 },
-                { "from": "SS", "to": "RR", "weight": 12 }, { "from": "T", "to": "EE", "weight": 20 }, { "from": "TT", "to": "UU", "weight": 10 },
-                { "from": "U", "to": "EE", "weight": 15 }, { "from": "U", "to": "Q", "weight": 22 }, { "from": "U", "to": "T", "weight": 13 },
-                { "from": "U", "to": "V", "weight": 10 }, { "from": "UU", "to": "HH", "weight": 13 }, { "from": "V", "to": "C", "weight": 26 },
-                { "from": "V", "to": "T", "weight": 18 }, { "from": "VV", "to": "FF", "weight": 14 }, { "from": "VV", "to": "GG", "weight": 10 },
-                { "from": "W", "to": "G", "weight": 20 }, { "from": "WW", "to": "W", "weight": 12 }, { "from": "X", "to": "KK", "weight": 14 },
-                { "from": "XX", "to": "A", "weight": 20 }, { "from": "XX", "to": "LL", "weight": 18 }, { "from": "Y", "to": "PP", "weight": 14 },
-                { "from": "Y", "to": "X", "weight": 18 }, { "from": "YY", "to": "D", "weight": 15 }, { "from": "YY", "to": "G", "weight": 14 },
-                { "from": "Z", "to": "SS", "weight": 25 }, { "from": "ZZ", "to": "QQ", "weight": 12 }
+                { "from": "A", "to": "B", "weight": 31 },
+                { "from": "A", "to": "D", "weight": 24 },
+                { "from": "A", "to": "G", "weight": 29 },
+                { "from": "A", "to": "XX", "weight": 20 },
+                { "from": "AA", "to": "BB", "weight": 14 },
+                { "from": "AA", "to": "S", "weight": 15 },
+                { "from": "AA", "to": "Z", "weight": 11 },
+                { "from": "B", "to": "C", "weight": 25 },
+                { "from": "B", "to": "E", "weight": 17 },
+                { "from": "B", "to": "H", "weight": 15 },
+                { "from": "BB", "to": "CC", "weight": 10 },
+                { "from": "BB", "to": "S", "weight": 12 },
+                { "from": "C", "to": "D", "weight": 22 },
+                { "from": "C", "to": "E", "weight": 12 },
+                { "from": "C", "to": "I", "weight": 18 },
+                { "from": "C", "to": "V", "weight": 26 },
+                { "from": "CC", "to": "DD", "weight": 12 },
+                { "from": "CC", "to": "F", "weight": 25 },
+                { "from": "CC", "to": "S", "weight": 18 },
+                { "from": "CC", "to": "SS", "weight": 20 },
+                { "from": "CC", "to": "UU", "weight": 15 },
+                { "from": "D", "to": "G", "weight": 20 },
+                { "from": "D", "to": "J", "weight": 22 },
+                { "from": "D", "to": "YY", "weight": 15 },
+                { "from": "DD", "to": "EE", "weight": 15 },
+                { "from": "DD", "to": "F", "weight": 35 },
+                { "from": "DD", "to": "GG", "weight": 10 },
+                { "from": "DD", "to": "T", "weight": 16 },
+                { "from": "E", "to": "FF", "weight": 15 },
+                { "from": "E", "to": "V", "weight": 11 },
+                { "from": "EE", "to": "FF", "weight": 12 },
+                { "from": "EE", "to": "T", "weight": 20 },
+                { "from": "EE", "to": "U", "weight": 14 },
+                { "from": "F", "to": "Q", "weight": 12 },
+                { "from": "F", "to": "R", "weight": 15 },
+                { "from": "F", "to": "S", "weight": 15 },
+                { "from": "F", "to": "T", "weight": 14 },
+                { "from": "FF", "to": "GG", "weight": 12 },
+                { "from": "FF", "to": "VV", "weight": 14 },
+                { "from": "G", "to": "J", "weight": 14 },
+                { "from": "G", "to": "XX", "weight": 12 },
+                { "from": "G", "to": "YY", "weight": 14 },
+                { "from": "GG", "to": "HH", "weight": 14 },
+                { "from": "GG", "to": "VV", "weight": 10 },
+                { "from": "H", "to": "WW", "weight": 3 },
+                { "from": "HH", "to": "II", "weight": 11 },
+                { "from": "HH", "to": "UU", "weight": 13 },
+                { "from": "I", "to": "J", "weight": 13 },
+                { "from": "I", "to": "K", "weight": 15 },
+                { "from": "I", "to": "MM", "weight": 12 },
+                { "from": "I", "to": "P", "weight": 14 },
+                { "from": "II", "to": "SS", "weight": 22 },
+                { "from": "II", "to": "TT", "weight": 15 },
+                { "from": "J", "to": "L", "weight": 18 },
+                { "from": "J", "to": "LL", "weight": 14 },
+                { "from": "J", "to": "MM", "weight": 10 },
+                { "from": "JJ", "to": "K", "weight": 20 },
+                { "from": "JJ", "to": "L", "weight": 14 },
+                { "from": "JJ", "to": "M", "weight": 11 },
+                { "from": "JJ", "to": "MM", "weight": 9 },
+                { "from": "JJ", "to": "N", "weight": 14 },
+                { "from": "K", "to": "MM", "weight": 10 },
+                { "from": "K", "to": "N", "weight": 58 },
+                { "from": "K", "to": "P", "weight": 12 },
+                { "from": "KK", "to": "QQ", "weight": 10 },
+                { "from": "KK", "to": "S", "weight": 12 },
+                { "from": "KK", "to": "X", "weight": 14 },
+                { "from": "KK", "to": "Y", "weight": 15 },
+                { "from": "L", "to": "M", "weight": 12 },
+                { "from": "L", "to": "MM", "weight": 15 },
+                { "from": "LL", "to": "XX", "weight": 18 },
+                { "from": "LL", "to": "YY", "weight": 10 },
+                { "from": "M", "to": "N", "weight": 16 },
+                { "from": "M", "to": "NN", "weight": 25 },
+                { "from": "N", "to": "O", "weight": 10 },
+                { "from": "N", "to": "OO", "weight": 36 },
+                { "from": "N", "to": "P", "weight": 20 },
+                { "from": "NN", "to": "O", "weight": 15 },
+                { "from": "NN", "to": "Q", "weight": 22 },
+                { "from": "NN", "to": "W", "weight": 20 },
+                { "from": "OO", "to": "PP", "weight": 11 },
+                { "from": "OO", "to": "W", "weight": 12 },
+                { "from": "OO", "to": "ZZ", "weight": 18 },
+                { "from": "P", "to": "Q", "weight": 18 },
+                { "from": "P", "to": "U", "weight": 11 },
+                { "from": "P", "to": "V", "weight": 15 },
+                { "from": "PP", "to": "Y", "weight": 13 },
+                { "from": "Q", "to": "R", "weight": 10 },
+                { "from": "Q", "to": "T", "weight": 25 },
+                { "from": "Q", "to": "U", "weight": 22 },
+                { "from": "QQ", "to": "RR", "weight": 15 },
+                { "from": "R", "to": "S", "weight": 28 },
+                { "from": "R", "to": "X", "weight": 10 },
+                { "from": "RR", "to": "S", "weight": 25 },
+                { "from": "RR", "to": "Y", "weight": 19 },
+                { "from": "S", "to": "Z", "weight": 11 },
+                { "from": "SS", "to": "Z", "weight": 25 },
+                { "from": "T", "to": "U", "weight": 13 },
+                { "from": "T", "to": "V", "weight": 18 },
+                { "from": "TT", "to": "UU", "weight": 10 },
+                { "from": "U", "to": "V", "weight": 10 },
+                { "from": "V", "to": "WW", "weight": 16 },
+                { "from": "VV", "to": "WW", "weight": 10 },
+                { "from": "X", "to": "Y", "weight": 18 },
+                { "from": "Y", "to": "ZZ", "weight": 17 },
+                  { "from": "O", "to": "Q", "weight": 17 },
+                    { "from": "R", "to": "W", "weight": 17 }
+            
+            
+            
             ]
         };
 
@@ -440,12 +614,19 @@
         canvas.call(zoom);
 
         function updateCoords() {
-            const sidebarWidth = window.innerWidth > 768 ? 400 : 0;
-            const w = window.innerWidth - sidebarWidth;
-            const h = window.innerHeight;
+            const canvasEl = document.getElementById("canvas");
+            const rect = canvasEl.getBoundingClientRect();
+            const w = Math.max(320, rect.width || window.innerWidth);
+            const h = Math.max(320, rect.height || window.innerHeight);
+            const isMobile = window.innerWidth <= 900;
+            // Keep circles/labels/icons fully inside the drawable area.
+            const padX = isMobile ? 52 : 72;
+            const padY = isMobile ? 52 : 72;
+            const innerW = Math.max(1, w - padX * 2);
+            const innerH = Math.max(1, h - padY * 2);
             graph.nodes.forEach(n => {
-                n.screenX = n.x * w;
-                n.screenY = n.y * h;
+                n.screenX = padX + n.x * innerW;
+                n.screenY = padY + n.y * innerH;
             });
         }
         updateCoords();
@@ -468,7 +649,7 @@
             .attr("x2", d => graph.nodes.find(n => n.id === d.to).screenX)
             .attr("y2", d => graph.nodes.find(n => n.id === d.to).screenY);
 
-        edgeGroups.append("text").attr("class", "edge-label")
+        const edgeLabels = edgeGroups.append("text").attr("class", "edge-label")
             .attr("x", d => (graph.nodes.find(n => n.id === d.from).screenX + graph.nodes.find(n => n.id === d.to).screenX) / 2)
             .attr("y", d => (graph.nodes.find(n => n.id === d.from).screenY + graph.nodes.find(n => n.id === d.to).screenY) / 2 - 5)
             .attr("text-anchor", "middle").text(d => d.weight);
@@ -490,6 +671,15 @@
 
         nodeGroups.append("text").attr("class", "node-label")
             .attr("text-anchor", "middle").attr("dy", "0.35em").text(d => d.id);
+
+        function syncNodeVisualsWithIcons() {
+            nodeGroups.each(function (d) {
+                const hasIcon = iconContainer.filter(n => n.id === d.id).style("display") !== "none";
+                const group = d3.select(this);
+                group.selectAll(".node-circle, .node-label")
+                    .style("display", hasIcon ? "none" : "block");
+            });
+        }
 
         const travelerGrad = defs.append("radialGradient").attr("id", "traveler-grad");
         travelerGrad.append("stop").attr("offset", "0%").attr("stop-color", "#fff");
@@ -526,10 +716,7 @@
                 .attr("width", 80).attr("height", 80).attr("x", -40).attr("y", -40)
                 .style("display", "block");
 
-            // HIDE CIRCLES AND LABELS for Start and Goal
-            nodeGroups.filter(d => d.id === startId || d.id === goalId)
-                .selectAll(".node-circle, .node-label")
-                .style("display", "none");
+            syncNodeVisualsWithIcons();
 
             document.getElementById('results').style.display = 'block';
             nodeGroups.filter(d => d.id === goalId || d.id === startId).attr("class", "node node-goal");
@@ -569,6 +756,19 @@
 
                 if (current === goalId) {
                     const finalPath = path, pathCoords = finalPath.map(id => graph.nodes.find(n => n.id === id));
+                    const finalPathEdges = new Set();
+                    for (let i = 0; i < finalPath.length - 1; i++) {
+                        const a = finalPath[i];
+                        const b = finalPath[i + 1];
+                        finalPathEdges.add([a, b].sort().join("|"));
+                    }
+
+                    // Keep blue explored edges, but remove blue from edges that belong to final path.
+                    edges.attr("class", function (d) {
+                        const key = [d.from, d.to].sort().join("|");
+                        if (finalPathEdges.has(key)) return "edge";
+                        return d3.select(this).classed("edge-tree") ? "edge edge-tree" : "edge";
+                    });
 
                     // Final Path Drawing (Flowing Green Dash style)
                     solutionPath.attr("points", pathCoords.map(n => `${n.screenX},${n.screenY}`).join(' '))
@@ -583,6 +783,7 @@
 
                     // Hide original start icon
                     iconContainer.filter(d => d.id === startId).style("display", "none");
+                    syncNodeVisualsWithIcons();
 
                     for (let i = 1; i < pathCoords.length; i++) {
                         SoundEngine.walk();
@@ -597,6 +798,7 @@
                     goalIcon.attr("xlink:href", "student-teacher.png")
                         .transition().duration(600)
                         .attr("width", 120).attr("height", 120).attr("x", -60).attr("y", -60);
+                    syncNodeVisualsWithIcons();
 
                     traveler.style("display", "none");
                     SoundEngine.success();
@@ -633,6 +835,9 @@
             nodeGroups.attr("transform", d => `translate(${d.screenX}, ${d.screenY})`);
             edges.attr("x1", d => graph.nodes.find(n => n.id === d.from).screenX).attr("y1", d => graph.nodes.find(n => n.id === d.from).screenY)
                 .attr("x2", d => graph.nodes.find(n => n.id === d.to).screenX).attr("y2", d => graph.nodes.find(n => n.id === d.to).screenY);
+            edgeLabels
+                .attr("x", d => (graph.nodes.find(n => n.id === d.from).screenX + graph.nodes.find(n => n.id === d.to).screenX) / 2)
+                .attr("y", d => (graph.nodes.find(n => n.id === d.from).screenY + graph.nodes.find(n => n.id === d.to).screenY) / 2 - 5);
         };
     </script>
 </body>
