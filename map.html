@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎓 Campus Router - Premium Pathfinding</title>
+    <title>🏢 Facility Location Optimizer - Premium Planning</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -327,15 +327,15 @@
 
 <body>
     <div class="sidebar">
-        <h2>🎓 Campus Routing</h2>
+        <h2>🏢 Facility Optimizer</h2>
 
         <div class="input-group">
-            <label>📍 Start Point</label>
+            <label>👥 Student Hub (Demand Point)</label>
             <select id="startNode"></select>
         </div>
 
         <div class="input-group">
-            <label>🎯 Destination</label>
+            <label>🏢 Target Facility (Resource Hub)</label>
             <select id="goalNode"></select>
         </div>
 
@@ -352,16 +352,18 @@
 
         <div class="results-card" id="results">
             <div id="status-header" style="display: none;">Ready</div>
-            <div id="status-sub" style="display: none; color: var(--text-secondary); font-size: 12px; margin-bottom: 20px;">System
+            <div id="status-sub"
+                style="display: none; color: var(--text-secondary); font-size: 12px; margin-bottom: 20px;">System
                 standby</div>
-
-            <div class="stat-item">
-                <span>Path Accumulation:</span>
-                <span class="stat-value" id="liveGCost">0</span>
-            </div>
-            <div class="stat-item">
-                <span>Expansion Cycle:</span>
-                <span class="stat-value" id="expandCount">0</span>
+            <div id="live-stats-container">
+                <div class="stat-item">
+                    <span>Path Accumulation:</span>
+                    <span class="stat-value" id="liveGCost">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Expansion Cycle:</span>
+                    <span class="stat-value" id="expandCount">0</span>
+                </div>
             </div>
 
             <label style="font-size: 10px; color: var(--text-secondary); margin-top: 15px;">DATA STREAM (ACTIVE
@@ -423,59 +425,58 @@
     <script>
         const graph = {
             nodes: [
-                { id: "A", x: 0.15, y: 0.85, color: "#f87171" },
-                { id: "AA", x: 0.88, y: 0.60, color: "#2dd4bf" },
-                { id: "B", x: 0.25, y: 0.80, color: "#818cf8" },
-                { id: "BB", x: 0.85, y: 0.75, color: "#f472b6" },
-                { id: "C", x: 0.30, y: 0.65, color: "#fb7185" },
-                { id: "CC", x: 0.75, y: 0.70, color: "#fb923c" },
-                { id: "D", x: 0.18, y: 0.70, color: "#34d399" },
-                { id: "DD", x: 0.65, y: 0.80, color: "#60a5fa" },
-                { id: "E", x: 0.35, y: 0.75, color: "#fbbf24" },
-                { id: "EE", x: 0.55, y: 0.75, color: "#a3e635" },
-                { id: "F", x: 0.65, y: 0.45, color: "#a78bfa" },
-                { id: "FF", x: 0.48, y: 0.85, color: "#f87171" },
-                { id: "G", x: 0.08, y: 0.75, color: "#2dd4bf" },
-                { id: "GG", x: 0.58, y: 0.92, color: "#818cf8" },
-                { id: "H", x: 0.25, y: 0.92, color: "#f472b6" },
-                { id: "HH", x: 0.75, y: 0.92, color: "#34d399" },
-                { id: "I", x: 0.28, y: 0.55, color: "#fb923c" },
-                { id: "II", x: 0.92, y: 0.88, color: "#fbbf24" },
-                { id: "J", x: 0.15, y: 0.45, color: "#60a5fa" },
-                { id: "JJ", x: 0.18, y: 0.30, color: "#a78bfa" },
-                { id: "K", x: 0.35, y: 0.42, color: "#a3e635" },
-                { id: "KK", x: 0.80, y: 0.32, color: "#2dd4bf" },
-                { id: "L", x: 0.12, y: 0.25, color: "#f87171" },
-                { id: "LL", x: 0.05, y: 0.55, color: "#f472b6" },
-                { id: "M", x: 0.22, y: 0.20, color: "#818cf8" },
-                { id: "MM", x: 0.22, y: 0.38, color: "#fb923c" },
-                { id: "N", x: 0.32, y: 0.18, color: "#34d399" },
-                { id: "NN", x: 0.42, y: 0.10, color: "#60a5fa" },
-                { id: "O", x: 0.38, y: 0.25, color: "#fbbf24" },
-                { id: "OO", x: 0.68, y: 0.10, color: "#a3e635" },
-                { id: "P", x: 0.42, y: 0.48, color: "#a78bfa" },
-                { id: "PP", x: 0.78, y: 0.15, color: "#f87171" },
-                { id: "Q", x: 0.55, y: 0.35, color: "#2dd4bf" },
-                { id: "QQ", x: 0.95, y: 0.22, color: "#818cf8" },
-                { id: "R", x: 0.62, y: 0.28, color: "#f472b6" },
-                { id: "RR", x: 0.95, y: 0.35, color: "#34d399" },
-                { id: "S", x: 0.80, y: 0.50, color: "#fb923c" },
-                { id: "SS", x: 0.95, y: 0.68, color: "#fbbf24" },
-                { id: "T", x: 0.60, y: 0.60, color: "#60a5fa" },
-                { id: "TT", x: 0.82, y: 0.82, color: "#a78bfa" },
-                { id: "U", x: 0.48, y: 0.55, color: "#a3e635" },
-                { id: "UU", x: 0.72, y: 0.88, color: "#2dd4bf" },
-                { id: "V", x: 0.45, y: 0.62, color: "#f87171" },
-                { id: "VV", x: 0.48, y: 0.95, color: "#f472b6" },
-                { id: "W", x: 0.55, y: 0.20, color: "#818cf8" },
-                { id: "WW", x: 0.32, y: 0.95, color: "#fbbf24" },
-                { id: "X", x: 0.70, y: 0.25, color: "#34d399" },
-                { id: "XX", x: 0.05, y: 0.85, color: "#60a5fa" },
-                { id: "Y", x: 0.88, y: 0.22, color: "#fb923c" },
-                { id: "YY", x: 0.10, y: 0.65, color: "#a3e635" },
-                { id: "Z", x: 0.92, y: 0.50, color: "#a78bfa" },
-                { id: "ZZ", x: 0.95, y: 0.10, color: "#f87171" }
-            
+                { id: "A", x: 0.15, y: 0.85, color: "#f87171", name: "A (Canteen)" },
+                { id: "AA", x: 0.88, y: 0.60, color: "#2dd4bf", name: "AA (Research Hub)" },
+                { id: "B", x: 0.25, y: 0.80, color: "#818cf8", name: "B (Library)" },
+                { id: "BB", x: 0.85, y: 0.75, color: "#f472b6", name: "BB (Innovation Lab)" },
+                { id: "C", x: 0.30, y: 0.65, color: "#fb7185", name: "C (Main Hall)" },
+                { id: "CC", x: 0.75, y: 0.70, color: "#fb923c", name: "CC (Maintenance Hub)" },
+                { id: "D", x: 0.18, y: 0.70, color: "#34d399", name: "D (Admin Block)" },
+                { id: "DD", x: 0.65, y: 0.80, color: "#60a5fa", name: "DD (Training Center)" },
+                { id: "E", x: 0.35, y: 0.75, color: "#fbbf24", name: "E (Laboratory A)" },
+                { id: "EE", x: 0.55, y: 0.75, color: "#a3e635", name: "EE (Design Studio)" },
+                { id: "F", x: 0.65, y: 0.45, color: "#a78bfa", name: "F (Parking Lot)" },
+                { id: "FF", x: 0.48, y: 0.85, color: "#f87171", name: "FF (Media Center)" },
+                { id: "G", x: 0.08, y: 0.75, color: "#2dd4bf", name: "G (Security Gate)" },
+                { id: "GG", x: 0.58, y: 0.92, color: "#818cf8", name: "GG (Utility Zone)" },
+                { id: "H", x: 0.25, y: 0.92, color: "#f472b6", name: "H (Rec Center)" },
+                { id: "HH", x: 0.75, y: 0.92, color: "#34d399", name: "HH (Archive Room)" },
+                { id: "I", x: 0.28, y: 0.55, color: "#fb923c", name: "I (Faculty Office)" },
+                { id: "II", x: 0.92, y: 0.88, color: "#fbbf24", name: "II (Telecom Hub)" },
+                { id: "J", x: 0.15, y: 0.45, color: "#60a5fa", name: "J (Lecture Theater)" },
+                { id: "JJ", x: 0.18, y: 0.30, color: "#a78bfa", name: "JJ (Study Lounge)" },
+                { id: "K", x: 0.35, y: 0.42, color: "#a3e635", name: "K (Student Center)" },
+                { id: "KK", x: 0.80, y: 0.32, color: "#2dd4bf", name: "KK (Reception Area)" },
+                { id: "L", x: 0.12, y: 0.25, color: "#f87171", name: "L (Research Wing)" },
+                { id: "LL", x: 0.05, y: 0.55, color: "#f472b6", name: "LL (East Gate)" },
+                { id: "M", x: 0.22, y: 0.20, color: "#818cf8", name: "M (Health Clinic)" },
+                { id: "MM", x: 0.22, y: 0.38, color: "#fb923c", name: "MM (Meeting Room)" },
+                { id: "N", x: 0.32, y: 0.18, color: "#34d399", name: "N (IT Hub)" },
+                { id: "NN", x: 0.42, y: 0.10, color: "#60a5fa", name: "NN (Server Room)" },
+                { id: "O", x: 0.38, y: 0.25, color: "#fbbf24", name: "O (Sports Complex)" },
+                { id: "OO", x: 0.68, y: 0.10, color: "#a3e635", name: "OO (Central Plaza)" },
+                { id: "P", x: 0.42, y: 0.48, color: "#a78bfa", name: "P (Residential Hall)" },
+                { id: "PP", x: 0.78, y: 0.15, color: "#f87171", name: "PP (Loading Zone)" },
+                { id: "Q", x: 0.55, y: 0.35, color: "#2dd4bf", name: "Q (Main Square)" },
+                { id: "QQ", x: 0.95, y: 0.22, color: "#818cf8", name: "QQ (Staff Lounge)" },
+                { id: "R", x: 0.62, y: 0.28, color: "#f472b6", name: "R (Seminar Hall)" },
+                { id: "RR", x: 0.95, y: 0.35, color: "#34d399", name: "RR (Security Post)" },
+                { id: "S", x: 0.80, y: 0.50, color: "#fb923c", name: "S (Cafeteria)" },
+                { id: "SS", x: 0.95, y: 0.68, color: "#fbbf24", name: "SS (Fire Station)" },
+                { id: "T", x: 0.60, y: 0.60, color: "#60a5fa", name: "T (Workshop)" },
+                { id: "TT", x: 0.82, y: 0.82, color: "#a78bfa", name: "TT (Cold Storage)" },
+                { id: "U", x: 0.48, y: 0.55, color: "#a3e635", name: "U (Logistics Hub)" },
+                { id: "UU", x: 0.72, y: 0.88, color: "#2dd4bf", name: "UU (Waste Management)" },
+                { id: "V", x: 0.45, y: 0.62, color: "#f87171", name: "V (Gymnasium)" },
+                { id: "VV", x: 0.48, y: 0.95, color: "#f472b6", name: "VV (Outer Ring)" },
+                { id: "W", x: 0.55, y: 0.20, color: "#818cf8", name: "W (Event Center)" },
+                { id: "WW", x: 0.32, y: 0.95, color: "#fbbf24", name: "WW (Basement Parking)" },
+                { id: "X", x: 0.70, y: 0.25, color: "#34d399", name: "X (Storage Annex)" },
+                { id: "XX", x: 0.05, y: 0.85, color: "#60a5fa", name: "XX (West Gate)" },
+                { id: "Y", x: 0.88, y: 0.22, color: "#fb923c", name: "Y (Delivery Bay)" },
+                { id: "YY", x: 0.10, y: 0.65, color: "#a3e635", name: "YY (Botanical Garden)" },
+                { id: "Z", x: 0.92, y: 0.50, color: "#a78bfa", name: "Z (Power Substation)" },
+                { id: "ZZ", x: 0.95, y: 0.10, color: "#f87171", name: "ZZ (Observation Deck)" }
             ],
             edges: [
                 { "from": "A", "to": "B", "weight": 31 },
@@ -583,11 +584,11 @@
                 { "from": "VV", "to": "WW", "weight": 10 },
                 { "from": "X", "to": "Y", "weight": 18 },
                 { "from": "Y", "to": "ZZ", "weight": 17 },
-                  { "from": "O", "to": "Q", "weight": 17 },
-                    { "from": "R", "to": "W", "weight": 17 }
-            
-            
-            
+                { "from": "O", "to": "Q", "weight": 17 },
+                { "from": "R", "to": "W", "weight": 17 }
+
+
+
             ]
         };
 
@@ -634,8 +635,8 @@
         const sSel = document.getElementById('startNode');
         const gSel = document.getElementById('goalNode');
         graph.nodes.sort((a, b) => a.id.localeCompare(b.id)).forEach(n => {
-            sSel.add(new Option(n.id, n.id));
-            gSel.add(new Option(n.id, n.id));
+            sSel.add(new Option(n.name, n.id));
+            gSel.add(new Option(n.name, n.id));
         });
         sSel.value = "A"; gSel.value = "ZZ";
 
@@ -691,58 +692,112 @@
             .attr("width", 80).attr("height", 80)
             .style("display", "none")
             .style("pointer-events", "none");
-
+        // A* algo
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         function heuristic(a, b) {
             const nA = graph.nodes.find(n => n.id === a), nB = graph.nodes.find(n => n.id === b);
             return Math.hypot(nA.screenX - nB.screenX, nA.screenY - nB.screenY);
         }
 
-        async function findPath(startId, goalId, algo) {
-            // RESET EVERYTHING: Restore all circles and labels first
+        async function resetSearchState(startId, goalId) {
             nodeGroups.selectAll(".node-circle, .node-label").style("display", "block");
-            edges.attr("class", "edge"); nodeGroups.attr("class", "node");
-            solutionPath.style("display", "none"); traveler.style("display", "none");
+            edges.attr("class", "edge");
+            nodeGroups.attr("class", "node");
+            solutionPath.style("display", "none");
+            traveler.style("display", "none");
             iconContainer.style("display", "none");
 
-            // Icon initialization
             iconContainer.filter(d => d.id === startId)
                 .attr("xlink:href", "student.png")
                 .attr("width", 80).attr("height", 80).attr("x", -40).attr("y", -40)
                 .style("display", "block");
 
             iconContainer.filter(d => d.id === goalId)
-                .attr("xlink:href", "teacher.png")
-                .attr("width", 80).attr("height", 80).attr("x", -40).attr("y", -40)
+                .attr("xlink:href", "goal.png")
+                .attr("width", 80).attr("height", 80).attr("x", -40).attr("y", -78)
                 .style("display", "block");
 
             syncNodeVisualsWithIcons();
-
             document.getElementById('results').style.display = 'block';
+            document.getElementById('live-stats-container').style.display = 'block';
             nodeGroups.filter(d => d.id === goalId || d.id === startId).attr("class", "node node-goal");
+        }
 
-            let visited = new Set(), parent = new Map(), gScore = new Map();
-            graph.nodes.forEach(n => gScore.set(n.id, Infinity));
+        async function finalizeSearch(path, expanded, totalCost) {
+            const startId = path[0];
+            const goalId = path[path.length - 1];
+            const pathCoords = path.map(id => graph.nodes.find(n => n.id === id));
+            const finalPathEdges = new Set();
+            for (let i = 0; i < path.length - 1; i++) {
+                finalPathEdges.add([path[i], path[i + 1]].sort().join("|"));
+            }
+
+            edges.attr("class", function (d) {
+                const key = [d.from, d.to].sort().join("|");
+                if (finalPathEdges.has(key)) return "edge";
+                return d3.select(this).classed("edge-tree") ? "edge edge-tree" : "edge";
+            });
+
+            solutionPath.attr("points", pathCoords.map(n => `${n.screenX},${n.screenY}`).join(' '))
+                .style("display", "block")
+                .attr("class", "solution-path path-active");
+
+            document.getElementById('status-header').innerHTML = "Optimal Route Found";
+            document.getElementById('live-stats-container').style.display = 'none';
+
+            // Show Final Summary
+            const summaryDiv = document.getElementById('final-summary');
+            summaryDiv.innerHTML = `
+                <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 5px; display: flex; flex-direction: column; gap: 10px;">
+                    <label style="font-size: 10px; color: var(--accent); letter-spacing: 1px; font-weight: 800;">ANALYSIS COMPLETE</label>
+                    <div class="stat-item" style="margin:0"><span>Total Path Cost:</span><span class="stat-value">${Math.round(totalCost)}</span></div>
+                    <div class="stat-item" style="margin:0"><span>Nodes Visited:</span><span class="stat-value">${expanded}</span></div>
+                    <div class="stat-item" style="margin:0"><span>Nodes in Path:</span><span class="stat-value">${path.length}</span></div>
+                </div>
+            `;
+
+            traveler.style("display", "block")
+                .attr("x", pathCoords[0].screenX - 40)
+                .attr("y", pathCoords[0].screenY - 40);
+
+            iconContainer.filter(d => d.id === startId).style("display", "none");
+            syncNodeVisualsWithIcons();
+
+            for (let i = 1; i < pathCoords.length; i++) {
+                SoundEngine.walk();
+                await traveler.transition().duration(400).ease(d3.easeQuadInOut)
+                    .attr("x", pathCoords[i].screenX - 40)
+                    .attr("y", pathCoords[i].screenY - 40)
+                    .end();
+            }
+
+            const goalIcon = iconContainer.filter(d => d.id === goalId);
+            goalIcon.attr("xlink:href", "student.png")
+                .transition().duration(600)
+                .attr("width", 80).attr("height", 80).attr("x", -40).attr("y", -40);
+            syncNodeVisualsWithIcons();
+
+            traveler.style("display", "none");
+            SoundEngine.success();
+            document.getElementById('status-header').innerHTML = "Session Commenced";
+        }
+
+        //BFS 
+        async function bfs(startId, goalId) {
+            await resetSearchState(startId, goalId);
+            document.getElementById('final-summary').innerHTML = "";
+            let visited = new Set(), parent = new Map(), queue = [startId], expanded = 0;
+            let gScore = new Map(); graph.nodes.forEach(n => gScore.set(n.id, Infinity));
             gScore.set(startId, 0);
 
-            let openSet = [startId], expanded = 0, bfsQueue = [startId];
-
-            while (true) {
-                let current;
-                if (algo === 'bfs') {
-                    if (bfsQueue.length === 0) break;
-                    current = bfsQueue.shift();
-                } else {
-                    if (openSet.length === 0) break;
-                    openSet.sort((a, b) => (algo === 'astar' ? (gScore.get(a) + heuristic(a, goalId)) : gScore.get(a)) - (algo === 'astar' ? (gScore.get(b) + heuristic(b, goalId)) : gScore.get(b)));
-                    current = openSet.shift();
-                }
-
+            while (queue.length > 0) {
+                let current = queue.shift();
                 if (visited.has(current)) continue;
                 visited.add(current); expanded++;
                 SoundEngine.scan();
 
-                document.getElementById('status-header').innerHTML = `Scanning: ${current}`;
+                const currentName = graph.nodes.find(n => n.id === current).name;
+                document.getElementById('status-header').innerHTML = `BFS Scanning: ${currentName}`;
                 document.getElementById('liveGCost').innerHTML = Math.round(gScore.get(current));
                 document.getElementById('expandCount').innerHTML = expanded;
 
@@ -751,69 +806,125 @@
                 document.getElementById('liveTrace').innerHTML = path.join(' > ');
 
                 nodeGroups.classed("node-checked", d => visited.has(d.id))
-                    .classed("node-frontier", d => algo === 'bfs' ? bfsQueue.includes(d.id) : openSet.includes(d.id))
+                    .classed("node-frontier", d => queue.includes(d.id))
                     .classed("node-current", d => d.id === current);
 
                 if (current === goalId) {
-                    const finalPath = path, pathCoords = finalPath.map(id => graph.nodes.find(n => n.id === id));
-                    const finalPathEdges = new Set();
-                    for (let i = 0; i < finalPath.length - 1; i++) {
-                        const a = finalPath[i];
-                        const b = finalPath[i + 1];
-                        finalPathEdges.add([a, b].sort().join("|"));
-                    }
-
-                    // Keep blue explored edges, but remove blue from edges that belong to final path.
-                    edges.attr("class", function (d) {
-                        const key = [d.from, d.to].sort().join("|");
-                        if (finalPathEdges.has(key)) return "edge";
-                        return d3.select(this).classed("edge-tree") ? "edge edge-tree" : "edge";
-                    });
-
-                    // Final Path Drawing (Flowing Green Dash style)
-                    solutionPath.attr("points", pathCoords.map(n => `${n.screenX},${n.screenY}`).join(' '))
-                        .style("display", "block")
-                        .attr("class", "solution-path path-active");
-
-                    document.getElementById('status-header').innerHTML = "Optimal Route Found";
-
-                    traveler.style("display", "block")
-                        .attr("x", pathCoords[0].screenX - 60)
-                        .attr("y", pathCoords[0].screenY - 60);
-
-                    // Hide original start icon
-                    iconContainer.filter(d => d.id === startId).style("display", "none");
-                    syncNodeVisualsWithIcons();
-
-                    for (let i = 1; i < pathCoords.length; i++) {
-                        SoundEngine.walk();
-                        await traveler.transition().duration(400).ease(d3.easeQuadInOut)
-                            .attr("x", pathCoords[i].screenX - 60)
-                            .attr("y", pathCoords[i].screenY - 60)
-                            .end();
-                    }
-
-                    // MEETING EVENT
-                    const goalIcon = iconContainer.filter(d => d.id === goalId);
-                    goalIcon.attr("xlink:href", "student-teacher.png")
-                        .transition().duration(600)
-                        .attr("width", 120).attr("height", 120).attr("x", -60).attr("y", -60);
-                    syncNodeVisualsWithIcons();
-
-                    traveler.style("display", "none");
-                    SoundEngine.success();
-                    document.getElementById('status-header').innerHTML = "Session Commenced";
+                    await finalizeSearch(path, expanded, gScore.get(goalId));
                     return;
                 }
 
                 const neighbors = graph.edges.filter(e => e.from === current || e.to === current);
                 for (const edge of neighbors) {
                     const neighbor = edge.from === current ? edge.to : edge.from;
-                    if (visited.has(neighbor)) continue;
-                    const tentative = gScore.get(current) + (algo === 'bfs' ? 1 : edge.weight);
+                    if (!visited.has(neighbor) && !queue.includes(neighbor)) {
+                        parent.set(neighbor, current);
+                        // Using edge.weight for gScore so 'Total Path Cost' reflects distance, 
+                        // even though BFS finds the path with fewer hops.
+                        gScore.set(neighbor, gScore.get(current) + edge.weight);
+                        queue.push(neighbor);
+                        edges.filter(e => e === edge).attr("class", "edge edge-tree");
+                    }
+                }
+                await sleep(120);
+            }
+            SoundEngine.fail();
+        }
+
+        //UCS
+        async function ucs(startId, goalId) {
+            await resetSearchState(startId, goalId);
+            document.getElementById('final-summary').innerHTML = "";
+            let visited = new Set(), parent = new Map(), openSet = [startId], expanded = 0;
+            let gScore = new Map(); graph.nodes.forEach(n => gScore.set(n.id, Infinity));
+            gScore.set(startId, 0);
+
+            while (openSet.length > 0) {
+                openSet.sort((a, b) => gScore.get(a) - gScore.get(b));
+                let current = openSet.shift();
+                if (visited.has(current)) continue;
+                visited.add(current); expanded++;
+                SoundEngine.scan();
+
+                const currentName = graph.nodes.find(n => n.id === current).name;
+                document.getElementById('status-header').innerHTML = `UCS Scanning: ${currentName}`;
+                document.getElementById('liveGCost').innerHTML = Math.round(gScore.get(current));
+                document.getElementById('expandCount').innerHTML = expanded;
+
+                let path = []; let t = current;
+                while (t) { path.unshift(t); t = parent.get(t); }
+                document.getElementById('liveTrace').innerHTML = path.join(' > ');
+
+                nodeGroups.classed("node-checked", d => visited.has(d.id))
+                    .classed("node-frontier", d => openSet.includes(d.id))
+                    .classed("node-current", d => d.id === current);
+
+                if (current === goalId) {
+                    await finalizeSearch(path, expanded, gScore.get(goalId));
+                    return;
+                }
+
+                const neighbors = graph.edges.filter(e => e.from === current || e.to === current);
+                for (const edge of neighbors) {
+                    const neighbor = edge.from === current ? edge.to : edge.from;
+                    const tentative = gScore.get(current) + edge.weight;
                     if (tentative < gScore.get(neighbor)) {
-                        parent.set(neighbor, current); gScore.set(neighbor, tentative);
-                        if (algo === 'bfs') bfsQueue.push(neighbor); else if (!openSet.includes(neighbor)) openSet.push(neighbor);
+                        parent.set(neighbor, current);
+                        gScore.set(neighbor, tentative);
+                        if (!openSet.includes(neighbor)) openSet.push(neighbor);
+                        edges.filter(e => e === edge).attr("class", "edge edge-tree");
+                    }
+                }
+                await sleep(120);
+            }
+            SoundEngine.fail();
+        }
+
+        // A*
+        async function astar(startId, goalId) {
+            await resetSearchState(startId, goalId);
+            document.getElementById('final-summary').innerHTML = "";
+            let visited = new Set(), parent = new Map(), openSet = [startId], expanded = 0;
+            let gScore = new Map(); graph.nodes.forEach(n => gScore.set(n.id, Infinity));
+            gScore.set(startId, 0);
+
+            while (openSet.length > 0) {
+                openSet.sort((a, b) => {
+                    const fA = gScore.get(a) + heuristic(a, goalId);
+                    const fB = gScore.get(b) + heuristic(b, goalId);
+                    return fA - fB;
+                });
+                let current = openSet.shift();
+                if (visited.has(current)) continue;
+                visited.add(current); expanded++;
+                SoundEngine.scan();
+
+                const currentName = graph.nodes.find(n => n.id === current).name;
+                document.getElementById('status-header').innerHTML = `A* Scanning: ${currentName}`;
+                document.getElementById('liveGCost').innerHTML = Math.round(gScore.get(current));
+                document.getElementById('expandCount').innerHTML = expanded;
+
+                let path = []; let t = current;
+                while (t) { path.unshift(t); t = parent.get(t); }
+                document.getElementById('liveTrace').innerHTML = path.join(' > ');
+
+                nodeGroups.classed("node-checked", d => visited.has(d.id))
+                    .classed("node-frontier", d => openSet.includes(d.id))
+                    .classed("node-current", d => d.id === current);
+
+                if (current === goalId) {
+                    await finalizeSearch(path, expanded, gScore.get(goalId));
+                    return;
+                }
+
+                const neighbors = graph.edges.filter(e => e.from === current || e.to === current);
+                for (const edge of neighbors) {
+                    const neighbor = edge.from === current ? edge.to : edge.from;
+                    const tentative = gScore.get(current) + edge.weight;
+                    if (tentative < gScore.get(neighbor)) {
+                        parent.set(neighbor, current);
+                        gScore.set(neighbor, tentative);
+                        if (!openSet.includes(neighbor)) openSet.push(neighbor);
                         edges.filter(e => e === edge).attr("class", "edge edge-tree");
                     }
                 }
@@ -826,7 +937,19 @@
             await SoundEngine.unlock();
             SoundEngine.click();
             document.getElementById('calculateBtn').disabled = true;
-            await findPath(sSel.value, gSel.value, document.getElementById('algoSelect').value);
+
+            const startStr = sSel.value;
+            const goalStr = gSel.value;
+            const algo = document.getElementById('algoSelect').value;
+
+            if (algo === 'astar') {
+                await astar(startStr, goalStr);
+            } else if (algo === 'ucs') {
+                await ucs(startStr, goalStr);
+            } else {
+                await bfs(startStr, goalStr);
+            }
+
             document.getElementById('calculateBtn').disabled = false;
         };
 
